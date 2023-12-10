@@ -72,15 +72,23 @@ char **tokenize_input(char *input)
  * execute_command - Executes a command in a new process.
  * @command: An array of strings representing the command and its arguments.
  * @argv: An array of strings representing the program name and its arguments.
- * @env: An array of strings representing the environment variables.
+ * @idx: An array of strings representing the program name and its arguments.
  * Return: The exit status of the executed command.
  */
 
-int execute_command(char **command, char **argv, char **env)
+int execute_command(char **command, char **argv, int idx)
 {
+	char *actual_command = NULL;
 	pid_t child_pid;
 	int stat;
 
+	actual_command = get_location(command[0]);
+	if (!actual_command)
+	{
+		printError(argv[0], command[0], idx);
+		free_2d_arr(command);
+		return (127);
+	}
 	child_pid = fork();
 	if (child_pid == -1)
 	{
@@ -91,11 +99,10 @@ int execute_command(char **command, char **argv, char **env)
 	if (child_pid == 0)
 	{
 		/* Child Process */
-		if (execve(command[0], command, env) == -1)
+		if (execve(actual_command, command, environ) == -1)
 		{
-			perror(argv[0]);
+			free(actual_command), actual_command = NULL;
 			free_2d_arr(command);
-			exit(0);
 		}
 	}
 	else
@@ -104,6 +111,8 @@ int execute_command(char **command, char **argv, char **env)
 		/* Wait for the Child */
 		waitpid(child_pid, &stat, 0);
 		free_2d_arr(command);
+		free(actual_command), actual_command = NULL;
 	}
 	return (WEXITSTATUS(stat));
 }
+

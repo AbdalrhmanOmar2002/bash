@@ -4,15 +4,14 @@
  * main - Entry point of the program.
  * @ac: Number of command-line arguments.
  * @argv: Array of command-line argument strings.
- * @env: Array of environment variable strings.
  * Return: The exit status of the program.
  */
 
-int main(int ac, char **argv, char **env)
+int main(int ac, char **argv)
 {
 	char *linptr = NULL;
 	char **command = NULL;
-	int stat = 0;
+	int stat = 0, idx = 0;
 	(void)ac;
 
 	while (1)
@@ -25,15 +24,20 @@ int main(int ac, char **argv, char **env)
 			{
 				write(STDOUT_FILENO, "\n", 1);
 			}
-
 			return (stat);
 		}
-
+		idx++;
 		command = tokenize_input(linptr);
 		if (!command)
 			continue;
 
-		stat = execute_command(command, argv, env);
+		if (is_built_in(command[0]))
+		{
+			handle_built_in(command, argv, stat, idx);
+		}
+		else
+		{
+			stat = execute_command(command, argv, idx);
+		}
 	}
-	return (0);
 }
